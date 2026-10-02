@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consulta de CEP</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding-top: 80px; }
+    main { background: white; padding: 32px; border-radius: 12px; width: 360px; box-shadow: 0 2px 10px rgba(0,0,0,.1); }
+    h1 { margin-top: 0; font-size: 22px; }
+    form { display: flex; gap: 8px; }
+    input { flex: 1; padding: 10px; font-size: 16px; border: 1px solid #ccc; border-radius: 6px; }
+    button { padding: 10px 16px; font-size: 16px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; }
+    #resultado { margin-top: 20px; white-space: pre-line; line-height: 1.6; }
+    .erro { color: #dc2626; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Consulta de CEP</h1>
+    <form id="form">
+      <input id="cep" placeholder="Ex: 01001-000" maxlength="9">
+      <button type="submit">Buscar</button>
+    </form>
+    <div id="resultado"></div>
+  </main>
+
+  <script>
+    const form = document.getElementById('form');
+    const input = document.getElementById('cep');
+    const resultado = document.getElementById('resultado');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      resultado.className = '';
+      resultado.textContent = 'Buscando...';
+
+      try {
+        const resp = await fetch('http://localhost:8080/cep/' + encodeURIComponent(input.value.trim()));
+
+        if (resp.status === 400) throw new Error('CEP inválido. Digite 8 números.');
+        if (resp.status === 404) throw new Error('CEP não encontrado.');
+        if (!resp.ok) throw new Error('Erro ao consultar. Tente novamente.');
+
+        const d = await resp.json();
+        resultado.textContent =
+          `Rua: ${d.logradouro}\n` +
+          `Bairro: ${d.bairro}\n` +
+          `Cidade: ${d.localidade} - ${d.uf}\n` +
+          `CEP: ${d.cep}`;
+      } catch (err) {
+        resultado.className = 'erro';
+        resultado.textContent = err.message;
+      }
+    });
+  </script>
+</body>
+</html>
